@@ -139,9 +139,43 @@
   .hrow { display:flex; gap:5px; flex-wrap:wrap; margin-top:8px; justify-content:center; }
   .hdot { width:10px; height:10px; border-radius:50%; }
   .hg { background:var(--green); } .hm { background:var(--amber); } .hb { background:var(--red); }
+
+  /* ── サイドバー開閉 ── */
+  #sidebar-toggle { display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:6px; border:1px solid var(--border); background:var(--paper-card); color:var(--ink-light); cursor:pointer; flex-shrink:0; font-size:16px; line-height:1; transition:background 0.15s; }
+  #sidebar-toggle:hover { background:var(--accent-pale); color:var(--accent); }
+
+  /* サイドバーが閉じた状態 */
+  #sidebar.collapsed { transform:translateX(-240px); }
+  #main.expanded { margin-left:0; }
+  #sidebar { transition:transform 0.25s ease; }
+  #main { transition:margin-left 0.25s ease; }
+
+  /* オーバーレイ（スマホ用） */
+  #sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:99; }
+  #sidebar-overlay.show { display:block; }
+
+  /* ── スマホ対応 ── */
+  @media (max-width:640px) {
+    #sidebar { transform:translateX(-240px); }
+    #sidebar.open { transform:translateX(0); }
+    #main { margin-left:0 !important; }
+    .page { padding:20px 16px; }
+    .home-grid { grid-template-columns:1fr 1fr; gap:10px; }
+    .cat-grid { grid-template-columns:1fr 1fr; }
+    #topnav { padding:0 14px; gap:8px; }
+    .home-title { font-size:18px; }
+    .dis-title { font-size:20px; }
+    .eval-btns { gap:8px; }
+    .ebtn { min-width:80px; padding:10px 12px; }
+  }
+  @media (max-width:400px) {
+    .cat-grid { grid-template-columns:1fr; }
+    .home-grid { grid-template-columns:1fr; }
+  }
 </style>
 </head>
 <body>
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
 <div id="app">
   <nav id="sidebar">
     <div id="sidebar-header" onclick="showHome()">
@@ -153,6 +187,7 @@
   </nav>
   <div id="main">
     <div id="topnav">
+      <button id="sidebar-toggle" onclick="toggleSidebar()" title="メニュー">☰</button>
       <button id="nav-home-btn" onclick="showHome()">🏠 ホーム</button>
       <div id="breadcrumb"><span>ホーム</span></div>
     </div>
@@ -296,6 +331,25 @@ function evaluate(rating){
 function renderSidebar(){const nav=document.getElementById('sidebar-nav');nav.innerHTML='';CATEGORIES.forEach(cat=>{const item=document.createElement('div');item.className='sb-cat';item.setAttribute('data-catid',cat.id);item.innerHTML='<span class="sb-cat-num">'+cat.roman+'</span><span>'+cat.name+'</span>';item.onclick=()=>showCat(cat);nav.appendChild(item);});}
 
 renderSidebar();renderHome();
+
+// ── サイドバー開閉 ──
+const isMobile = () => window.innerWidth <= 640;
+function toggleSidebar(){
+  if(isMobile()){
+    const open = document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('show', open);
+  } else {
+    const collapsed = document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main').classList.toggle('expanded', collapsed);
+  }
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+// スマホでカテゴリ選択後にサイドバーを閉じる
+const _origShowCat = showCat;
+showCat = function(cat){ _origShowCat(cat); if(isMobile()) closeSidebar(); };
 
 // ─── ↓↓↓ コンテンツをここに追加 ↓↓↓ ───────────────────────
 // DISEASE_CONTENT[dk('カテゴリID','大項目ID','疾患名')]={sections:[{label:'概念・定義',html:'...'},{label:'症状',html:'...'},{label:'診断',html:'...'},{label:'治療',html:'...'}]};
